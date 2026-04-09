@@ -1,0 +1,150 @@
+body {
+    margin: 0;
+    font-family: "Inter", sans-serif;
+    background: linear-gradient(135deg, #0f172a, #020617);
+    color: white;
+}
+
+/* Layout */
+.app {
+    display: flex;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 220px;
+    height: 100vh;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(20px);
+    padding: 20px;
+}
+
+.sidebar h2 {
+    margin-bottom: 30px;
+}
+
+.nav-item {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.nav-item:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.active {
+    background: rgba(255,255,255,0.2);
+}
+
+/* Main */
+.main {
+    flex: 1;
+    padding: 30px;
+}
+
+/* Header */
+.header h1 {
+    margin: 0;
+}
+
+.header p {
+    opacity: 0.6;
+}
+
+/* Cards */
+.card {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 20px;
+    margin: 10px;
+    transition: 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px) scale(1.02);
+}
+
+/* Stats */
+.stats {
+    display: flex;
+}
+
+.stat p {
+    font-size: 28px;
+}
+
+/* Grid */
+.grid {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+/* Lists */
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+li {
+    padding: 8px;
+    margin: 5px 0;
+    background: rgba(255,255,255,0.08);
+    border-radius: 8px;
+}
+
+/* Smooth animation */
+.card {
+    animation: fadeIn 0.6s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+/* glowing pulse for stats */
+.stat p {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+/* smooth hover glow */
+.card:hover {
+    box-shadow: 0 0 25px rgba(34,197,94,0.3);
+}
+
+/* scrollbar styling */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 10px;
+}
+.insights {
+    margin-top: 20px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.insights li {
+    margin: 10px 0;
+    padding: 12px;
+    background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(59,130,246,0.1));
+    border-radius: 10px;
+    animation: fadeIn 0.5s ease;
+}
+

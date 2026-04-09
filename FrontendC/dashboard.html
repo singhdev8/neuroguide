@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroGuide — Analytics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --black: #060a0f;
+            --black-2: #0a1018;
+            --black-3: #0d1520;
+            --blue: #1a8cff;
+            --blue-dim: rgba(26,140,255,0.1);
+            --blue-border: rgba(26,140,255,0.18);
+            --green: #00c97a;
+            --green-dim: rgba(0,201,122,0.1);
+            --green-border: rgba(0,201,122,0.22);
+            --text: #c8dde8;
+            --text-dim: #4a6678;
+            --text-bright: #e8f4ff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--black);
+            font-family: 'Space Grotesk', sans-serif;
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(26,140,255,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(26,140,255,0.025) 1px, transparent 1px);
+            background-size: 44px 44px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 230px;
+            min-height: 100vh;
+            background: var(--black-2);
+            border-right: 1px solid var(--blue-border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px 18px;
+            border-bottom: 1px solid var(--blue-border);
+        }
+
+        .logo-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+
+        .logo-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green);
+            animation: pulse 2.5s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes pulse {
+            0%,100% { box-shadow: 0 0 6px var(--green); }
+            50% { box-shadow: 0 0 14px var(--green); opacity: 0.6; }
+        }
+
+        .logo-row h2 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-bright);
+            letter-spacing: 0.5px;
+        }
+
+        .sidebar-sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.56rem;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            margin-left: 1px;
+        }
+
+        /* Nav */
+        .nav { padding: 16px 12px; flex: 1; }
+
+        .nav-section {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            letter-spacing: 2px;
+            color: rgba(74,102,120,0.6);
+            padding: 0 8px;
+            margin: 16px 0 6px;
+        }
+
+        .nav-section:first-child { margin-top: 0; }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 10px;
+            margin: 2px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            letter-spacing: 0.3px;
+        }
+
+        .nav-item:hover {
+            color: var(--text);
+            background: rgba(26,140,255,0.06);
+        }
+
+        .nav-item.active {
+            color: var(--blue);
+            background: var(--blue-dim);
+            border-color: var(--blue-border);
+        }
+
+        .nav-icon { font-size: 0.8rem; opacity: 0.7; }
+
+        /* Graph stats */
+        .graph-stats {
+            padding: 16px 20px;
+            border-top: 1px solid var(--blue-border);
+        }
+
+        .gs-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.58rem;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .gs-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .gs-key {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            color: var(--text-dim);
+        }
+
+        .gs-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--blue);
+            font-weight: 500;
+        }
+
+        .gs-bar {
+            height: 1px;
+            background: var(--blue-border);
+            border-radius: 1px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .gs-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--blue), var(--green));
+        }
+
+        .back-btn {
+            margin: 12px;
+            padding: 10px 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.5px;
+            background: transparent;
+            border: 1px solid var(--blue-border);
+            color: var(--text-dim);
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            border-color: var(--blue);
+            color: var(--blue);
+            background: var(--blue-dim);
+        }
+
+        /* MAIN */
+        .main {
+            flex: 1;
+            padding: 28px 32px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--blue-border) transparent;
+        }
+
+        .main::-webkit-scrollbar { width: 3px; }
+        .main::-webkit-scrollbar-thumb { background: var(--blue-border); border-radius: 2px; }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid var(--blue-border);
+        }
+
+        .header h1 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-bright);
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+
+        .header-right {
+            text-align: right;
+        }
+
+        .refresh-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--green);
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            justify-content: flex-end;
+            margin-bottom: 4px;
+        }
+
+        .spin { animation: spin 2s linear infinite; display: inline-block; }
+        @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+        .last-update {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.56rem;
+            color: rgba(74,102,120,0.6);
+            letter-spacing: 0.5px;
+        }
+
+        /* STATS */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3,1fr);
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background: var(--black-2);
+            border: 1px solid var(--blue-border);
+            border-top: 2px solid var(--blue);
+            padding: 18px 20px;
+            border-radius: 2px;
+            transition: border-color 0.2s;
+            animation: fadeUp 0.5s ease both;
+        }
+
+        .stat-card:nth-child(2) { animation-delay: 0.08s; }
+        .stat-card:nth-child(3) { animation-delay: 0.16s; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stat-card:hover { border-color: rgba(26,140,255,0.4); }
+        .stat-card.likes { border-top-color: var(--green); }
+        .stat-card.likes:hover { border-color: var(--green-border); }
+
+        .stat-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 1.5px;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-bright);
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .stat-card.likes .stat-value { color: var(--green); }
+
+        .stat-sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.58rem;
+            color: rgba(74,102,120,0.5);
+            letter-spacing: 0.5px;
+        }
+
+        /* GRID */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        /* CARD */
+        .card {
+            background: var(--black-2);
+            border: 1px solid var(--blue-border);
+            padding: 20px;
+            border-radius: 2px;
+            animation: fadeUp 0.5s ease both;
+            transition: border-color 0.2s;
+        }
+
+        .card:hover { border-color: rgba(26,140,255,0.35); }
+
+        .card-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            letter-spacing: 1.5px;
+            color: var(--text-dim);
+            margin-bottom: 16px;
+        }
+
+        /* Chart */
+        .chart-wrap {
+            position: relative;
+            max-width: 180px;
+            margin: 0 auto;
+        }
+
+        .chart-center {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%,-50%);
+            text-align: center;
+        }
+
+        .chart-pct {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-bright);
+            display: block;
+            line-height: 1;
+        }
+
+        .chart-sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.55rem;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            margin-top: 3px;
+        }
+
+        /* Lists */
+        ul { list-style: none; padding: 0; }
+
+        .tech-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 9px 12px;
+            margin: 5px 0;
+            background: var(--black-3);
+            border: 1px solid rgba(26,140,255,0.1);
+            border-radius: 3px;
+            transition: all 0.2s;
+            animation: fadeUp 0.3s ease both;
+        }
+
+        .tech-item:hover {
+            border-color: var(--blue-border);
+            background: rgba(26,140,255,0.05);
+        }
+
+        .tech-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text);
+        }
+
+        .tech-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            border-radius: 3px;
+        }
+
+        #likedList .tech-count {
+            color: var(--green);
+            background: var(--green-dim);
+            border: 1px solid var(--green-border);
+        }
+
+        #dislikedList .tech-count {
+            color: var(--text-dim);
+            background: rgba(26,140,255,0.06);
+            border: 1px solid var(--blue-border);
+        }
+
+        /* INSIGHTS */
+        .insights-card { animation-delay: 0.3s; }
+
+        .insight-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 12px 14px;
+            margin: 6px 0;
+            background: var(--black-3);
+            border: 1px solid rgba(26,140,255,0.1);
+            border-left: 2px solid var(--blue);
+            border-radius: 0 4px 4px 0;
+            transition: all 0.2s;
+            animation: fadeUp 0.4s ease both;
+        }
+
+        .insight-item:hover {
+            border-color: var(--blue-border);
+            background: rgba(26,140,255,0.04);
+        }
+
+        .insight-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.62rem;
+            color: var(--blue);
+            flex-shrink: 0;
+            margin-top: 1px;
+            opacity: 0.7;
+        }
+
+        .insight-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+
+        .empty-list {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: rgba(74,102,120,0.4);
+            letter-spacing: 1px;
+            text-align: center;
+            padding: 18px;
+        }
+
+        .fade-out { animation: fadeOut 0.25s forwards; }
+        @keyframes fadeOut { to { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-row">
+                <div class="logo-dot"></div>
+                <h2>NeuroGuide</h2>
+            </div>
+            <div class="sidebar-sub">knowledge graph ai · v2.0</div>
+        </div>
+
+        <div class="nav">
+            <div class="nav-section">navigation</div>
+            <div class="nav-item active"><span class="nav-icon">◈</span> Analytics</div>
+            
+            <div class="nav-section">system</div>
+            <div class="nav-item"><span class="nav-icon">⬡</span> Knowledge Graph</div>
+            
+        </div>
+
+        <div class="graph-stats">
+            <div class="gs-label">graph metrics</div>
+            <div class="gs-row"><span class="gs-key">nodes</span><span class="gs-val">63</span></div>
+            <div class="gs-bar"><div class="gs-fill" style="width:100%"></div></div>
+            <div class="gs-row"><span class="gs-key">relationships</span><span class="gs-val">45</span></div>
+            <div class="gs-bar"><div class="gs-fill" style="width:71%"></div></div>
+            <div class="gs-row"><span class="gs-key">hop depth</span><span class="gs-val">3</span></div>
+            <div class="gs-bar"><div class="gs-fill" style="width:50%"></div></div>
+        </div>
+
+        <button class="back-btn" onclick="goToChat()">← Back to chat</button>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+        <div class="header">
+            <div>
+                <h1>System Analytics</h1>
+                <p>real-time behavioral intelligence · neuroguide engine</p>
+            </div>
+            <div class="header-right">
+                <div class="refresh-tag"><span class="spin">⟳</span> auto-refresh 10s</div>
+                <div class="last-update" id="lastUpdate">last update: —</div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card likes">
+                <div class="stat-label">TOTAL LIKES</div>
+                <div class="stat-value" id="likes">0</div>
+                <div class="stat-sub">positive engagements</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">TOTAL DISLIKES</div>
+                <div class="stat-value" id="dislikes">0</div>
+                <div class="stat-sub">negative engagements</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">ENGAGEMENT SCORE</div>
+                <div class="stat-value" id="engagement">0</div>
+                <div class="stat-sub">net preference delta</div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="card-title">FEEDBACK SPLIT</div>
+                <div class="chart-wrap">
+                    <canvas id="chart"></canvas>
+                    <div class="chart-center">
+                        <span class="chart-pct" id="likeRatio">—</span>
+                        <span class="chart-sub">positive</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">TOP PREFERRED</div>
+                <ul id="likedList"><div class="empty-list">no data yet</div></ul>
+            </div>
+
+            <div class="card">
+                <div class="card-title">LOW PREFERENCE</div>
+                <ul id="dislikedList"><div class="empty-list">no data yet</div></ul>
+            </div>
+        </div>
+
+        <div class="card insights-card">
+            <div class="card-title">AI BEHAVIORAL INSIGHTS</div>
+            <div id="insightsList"><div class="empty-list">loading insights...</div></div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    let chart;
+
+    function animateValue(id, end, duration) {
+        const obj = document.getElementById(id);
+        let startTime = null;
+        function step(ts) {
+            if (!startTime) startTime = ts;
+            const p = Math.min((ts - startTime) / duration, 1);
+            const eased = 1 - Math.pow(1 - p, 3);
+            obj.innerText = Math.floor(eased * end);
+            if (p < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+    }
+
+    async function updateDashboard() {
+        try {
+            const res = await fetch("http://127.0.0.1:8000/analytics");
+            const data = await res.json();
+
+            animateValue("likes", data.total_liked, 600);
+            animateValue("dislikes", data.total_disliked, 600);
+            animateValue("engagement", data.total_liked - data.total_disliked, 600);
+
+            const total = data.total_liked + data.total_disliked;
+            const pct = total > 0 ? Math.round((data.total_liked / total) * 100) : 0;
+            document.getElementById("likeRatio").innerText = pct + "%";
+
+            const likedList = document.getElementById("likedList");
+            const dislikedList = document.getElementById("dislikedList");
+            likedList.innerHTML = "";
+            dislikedList.innerHTML = "";
+
+            if (!data.liked.length) likedList.innerHTML = '<div class="empty-list">no data yet</div>';
+            data.liked.forEach((item, i) => {
+                const li = document.createElement("li");
+                li.className = "tech-item";
+                li.style.animationDelay = `${i * 0.07}s`;
+                li.innerHTML = `<span class="tech-name">${item.technique}</span><span class="tech-count">×${item.count}</span>`;
+                likedList.appendChild(li);
+            });
+
+            if (!data.disliked.length) dislikedList.innerHTML = '<div class="empty-list">no data yet</div>';
+            data.disliked.forEach((item, i) => {
+                const li = document.createElement("li");
+                li.className = "tech-item";
+                li.style.animationDelay = `${i * 0.07}s`;
+                li.innerHTML = `<span class="tech-name">${item.technique}</span><span class="tech-count">×${item.count}</span>`;
+                dislikedList.appendChild(li);
+            });
+
+            if (!chart) {
+                chart = new Chart(document.getElementById("chart"), {
+                    type: "doughnut",
+                    data: {
+                        labels: ["Liked", "Disliked"],
+                        datasets: [{
+                            data: [data.total_liked, data.total_disliked],
+                            backgroundColor: ["rgba(0,201,122,0.6)", "rgba(26,140,255,0.3)"],
+                            borderColor: ["rgba(0,201,122,0.8)", "rgba(26,140,255,0.5)"],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        cutout: "72%",
+                        animation: { duration: 700 },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: "rgba(10,16,24,0.95)",
+                                borderColor: "rgba(26,140,255,0.2)",
+                                borderWidth: 1,
+                                titleFont: { family: "'JetBrains Mono', monospace", size: 10 },
+                                bodyFont: { family: "'JetBrains Mono', monospace", size: 11 },
+                                titleColor: "#1a8cff",
+                                bodyColor: "#c8dde8"
+                            }
+                        }
+                    }
+                });
+            } else {
+                chart.data.datasets[0].data = [data.total_liked, data.total_disliked];
+                chart.update();
+            }
+
+            const now = new Date();
+            document.getElementById("lastUpdate").innerText =
+                `last update: ${now.toLocaleTimeString()}`;
+
+        } catch (e) { console.error(e); }
+    }
+
+    async function loadInsights() {
+        try {
+            const res = await fetch("http://127.0.0.1:8000/insights");
+            const data = await res.json();
+            const container = document.getElementById("insightsList");
+            container.innerHTML = "";
+            if (!data.insights?.length) {
+                container.innerHTML = '<div class="empty-list">no insights available yet</div>';
+                return;
+            }
+            data.insights.forEach((text, i) => {
+                const div = document.createElement("div");
+                div.className = "insight-item";
+                div.style.animationDelay = `${i * 0.08}s`;
+                div.innerHTML = `
+                    <span class="insight-num">[${String(i+1).padStart(2,'0')}]</span>
+                    <span class="insight-text">${text}</span>`;
+                container.appendChild(div);
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    function goToChat() {
+        document.body.classList.add("fade-out");
+        setTimeout(() => { window.location.href = "index.html"; }, 250);
+    }
+
+    setInterval(() => { updateDashboard(); loadInsights(); }, 10000);
+    updateDashboard();
+    loadInsights();
+</script>
+</body>
+</html>
