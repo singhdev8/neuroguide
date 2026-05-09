@@ -4,13 +4,19 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-client = MongoClient(os.getenv("MONGO_URI"))
-db = client["neuroguide"]
-collection = db["user_data"]
+_client = None
+_collection = None
 
+def get_collection():
+    global _client, _collection
+    if _collection is None:
+        _client = MongoClient(os.getenv("MONGO_URI"))
+        db = _client["neuroguide"]
+        _collection = db["user_data"]
+    return _collection
 
 def save_feedback(user_id, technique, liked=True):
-    collection.update_one(
+    get_collection().update_one(
         {"user_id": user_id},
         {"$push": {
             "history": {
@@ -21,11 +27,8 @@ def save_feedback(user_id, technique, liked=True):
         upsert=True
     )
 
-
 def get_user_history(user_id):
-    user = collection.find_one({"user_id": user_id})
-
+    user = get_collection().find_one({"user_id": user_id})
     if not user:
         return []
-
     return user.get("history", [])
