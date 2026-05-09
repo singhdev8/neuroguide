@@ -457,6 +457,9 @@
 
 </div>
 <script>
+    // 🔧 UPDATE THIS after Railway deploy — paste your Railway URL here
+    const API_BASE = "https://YOUR-APP.up.railway.app";
+
     const MAX_SCORE = 6;
 
     function addMessage(text, cls) {
@@ -549,7 +552,7 @@
         input.value = "";
         showTyping();
         try {
-            const res = await fetch("https://neuroguide-1.onrender.com/recommend", {
+            const res = await fetch(`${API_BASE}/recommend`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ texts: [text] })
@@ -560,7 +563,7 @@
         if (data.fallback) {
             addMessage("Not found in knowledge graph. Searching for guidance...", "bot");
             showTyping();
-            const fallbackRes = await fetch("https://neuroguide-1.onrender.com/ai-fallback", {
+            const fallbackRes = await fetch(`${API_BASE}/ai-fallback`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ query: data.query })
@@ -583,7 +586,7 @@
         const card = btn.closest('.rec-card');
         card.querySelectorAll('button').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        await fetch("https://neuroguide-1.onrender.com/feedback", {
+        await fetch(`${API_BASE}/feedback`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ user_id: "user1", technique, liked })
