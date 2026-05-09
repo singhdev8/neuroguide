@@ -594,7 +594,7 @@
     }
     async function loadGraphStats() {
     try {
-        const res = await fetch("http://127.0.0.1:8000/graph-stats");
+        const res = await fetch("https://neuroguide-1.onrender.com/graph-stats");
         const data = await res.json();
         
         document.getElementById("statNodes").innerText = data.nodes;
@@ -609,7 +609,7 @@
 
     async function updateDashboard() {
         try {
-            const res = await fetch("http://127.0.0.1:8000/analytics");
+            const res = await fetch("https://neuroguide-1.onrender.com/analytics");
             const data = await res.json();
 
             animateValue("likes", data.total_liked, 600);
@@ -686,7 +686,7 @@
 
     async function loadInsights() {
         try {
-            const res = await fetch("http://127.0.0.1:8000/insights");
+            const res = await fetch("https://neuroguide-1.onrender.com/insights");
             const data = await res.json();
             const container = document.getElementById("insightsList");
             container.innerHTML = "";

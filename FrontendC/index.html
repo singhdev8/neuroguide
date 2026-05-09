@@ -549,7 +549,7 @@
         input.value = "";
         showTyping();
         try {
-            const res = await fetch("http://127.0.0.1:8000/recommend", {
+            const res = await fetch("https://neuroguide-1.onrender.com/recommend", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ texts: [text] })
@@ -560,7 +560,7 @@
         if (data.fallback) {
             addMessage("Not found in knowledge graph. Searching for guidance...", "bot");
             showTyping();
-            const fallbackRes = await fetch("http://127.0.0.1:8000/ai-fallback", {
+            const fallbackRes = await fetch("https://neuroguide-1.onrender.com/ai-fallback", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ query: data.query })
@@ -583,7 +583,7 @@
         const card = btn.closest('.rec-card');
         card.querySelectorAll('button').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        await fetch("http://127.0.0.1:8000/feedback", {
+        await fetch("https://neuroguide-1.onrender.com/feedback", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ user_id: "user1", technique, liked })
