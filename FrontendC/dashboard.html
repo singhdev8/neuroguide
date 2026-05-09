@@ -503,11 +503,10 @@
         </div>
 
         <div class="graph-stats">
-            <div class="gs-label">graph metrics</div>
-            <div class="gs-row"><span class="gs-key">nodes</span><span class="gs-val">63</span></div>
-            <div class="gs-bar"><div class="gs-fill" style="width:100%"></div></div>
-            <div class="gs-row"><span class="gs-key">relationships</span><span class="gs-val">45</span></div>
-            <div class="gs-bar"><div class="gs-fill" style="width:71%"></div></div>
+            <div class="gs-row"><span class="gs-key">nodes</span><span class="gs-val" id="statNodes">—</span></div>
+            <div class="gs-bar"><div class="gs-fill" id="barNodes" style="width:0%"></div></div>
+            <div class="gs-row"><span class="gs-key">relationships</span><span class="gs-val" id="statRels">—</span></div>
+            <div class="gs-bar"><div class="gs-fill" id="barRels" style="width:0%"></div></div>
             <div class="gs-row"><span class="gs-key">hop depth</span><span class="gs-val">3</span></div>
             <div class="gs-bar"><div class="gs-fill" style="width:50%"></div></div>
         </div>
@@ -592,6 +591,20 @@
             if (p < 1) requestAnimationFrame(step);
         }
         requestAnimationFrame(step);
+    }
+    async function loadGraphStats() {
+    try {
+        const res = await fetch("http://127.0.0.1:8000/graph-stats");
+        const data = await res.json();
+        
+        document.getElementById("statNodes").innerText = data.nodes;
+        document.getElementById("statRels").innerText = data.relationships;
+        
+        // Bar widths relative to each other
+        const max = Math.max(data.nodes, data.relationships);
+        document.getElementById("barNodes").style.width = ((data.nodes / max) * 100) + "%";
+        document.getElementById("barRels").style.width = ((data.relationships / max) * 100) + "%";
+    } catch(e) { console.error(e); }
     }
 
     async function updateDashboard() {
@@ -698,9 +711,10 @@
         setTimeout(() => { window.location.href = "index.html"; }, 250);
     }
 
-    setInterval(() => { updateDashboard(); loadInsights(); }, 10000);
+    setInterval(() => { updateDashboard(); loadInsights(); loadGraphStats(); }, 10000);
     updateDashboard();
     loadInsights();
+    loadGraphStats();
 </script>
 </body>
 </html>
